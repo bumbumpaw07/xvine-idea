@@ -1,0 +1,411 @@
+import React, { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Heart,
+  MessageCircle,
+  Share,
+  Coins,
+  Home,
+  Bell,
+  Mail,
+  CornerLeftDown,
+  Video,
+  XCircle,
+  Hash,
+  Brain,
+  Bookmark,
+  Users,
+  User
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+// A small array of sample videos
+const SAMPLE_VIDEOS = [
+  {
+    title: "5s Sample",
+    url: "https://samplelib.com/lib/preview/mp4/sample-5s.mp4",
+  },
+  {
+    title: "10s Sample",
+    url: "https://samplelib.com/lib/preview/mp4/sample-10s.mp4",
+  },
+  {
+    title: "30s Sample",
+    url: "https://samplelib.com/lib/preview/mp4/sample-30s.mp4",
+  },
+];
+
+// VideoPost component with coin animations & inline replies (text or video)
+const VideoPost = ({
+  videoUrl,
+  username,
+  profilePic,
+  caption,
+  likes,
+  comments,
+  coins,
+}) => {
+  // Coin states
+  const [totalCoins, setTotalCoins] = useState(coins);
+  const [coinAnimations, setCoinAnimations] = useState([]);
+
+  // Inline reply states
+  const [showReplyBox, setShowReplyBox] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [replyVideo, setReplyVideo] = useState(null);
+
+  // Show/hide sample videos modal
+  const [showSampleVideos, setShowSampleVideos] = useState(false);
+
+  // Prepopulate with a sample reply containing a video
+  const [replies, setReplies] = useState([
+    {
+      text: "This is a sample reply with a video!",
+      video: "https://samplelib.com/lib/preview/mp4/sample-5s.mp4",
+    },
+  ]);
+
+  // Coin animation logic
+  const handleSendCoin = () => {
+    setTotalCoins(totalCoins + 1);
+    const newAnimation = {
+      id: Date.now(),
+      position: { x: 0, y: 0 },
+    };
+    setCoinAnimations((prev) => [...prev, newAnimation]);
+    // Remove the animation after 2 seconds
+    setTimeout(() => {
+      setCoinAnimations((prev) => prev.filter((anim) => anim.id !== newAnimation.id));
+    }, 2000);
+  };
+
+  // Toggle inline reply box
+  const handleToggleReplyBox = () => {
+    setShowReplyBox((prev) => !prev);
+    // Reset if closed
+    if (showReplyBox) {
+      setReplyText("");
+      setReplyVideo(null);
+      setShowSampleVideos(false);
+    }
+  };
+
+  // Submit reply
+  const handleSubmitReply = () => {
+    // If we have neither text nor video, we ignore.
+    if (!replyText.trim() && !replyVideo) return;
+
+    // Add a new reply object.
+    const newReply = {
+      text: replyText.trim(),
+      video: replyVideo,
+    };
+
+    setReplies([...replies, newReply]);
+    setReplyText("");
+    setReplyVideo(null);
+    setShowReplyBox(false);
+    setShowSampleVideos(false);
+  };
+
+  // Handle selection of a sample video
+  const handleSelectSampleVideo = (videoUrl) => {
+    setReplyVideo(videoUrl);
+    setShowSampleVideos(false);
+  };
+
+  return (
+    <Card className="w-full max-w-md mx-auto my-4 bg-black text-white shadow-md rounded-2xl border border-gray-700">
+      {/* Header: Profile */}
+      <div className="flex items-center p-4 border-b border-gray-700">
+        <img
+          src={profilePic}
+          alt={`${username}'s profile`}
+          className="w-12 h-12 rounded-full mr-3 border border-gray-600"
+        />
+        <div>
+          <p className="font-semibold text-lg text-white">{username}</p>
+          <p className="text-sm text-gray-400">Just now</p>
+        </div>
+      </div>
+
+      {/* Video Content */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="relative">
+          <video
+            src={videoUrl}
+            controls
+            className="w-full h-auto rounded-b-xl border-t border-gray-700"
+          />
+          {/* Floating coin animations */}
+          <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+            <AnimatePresence>
+              {coinAnimations.map((anim) => (
+                <motion.div
+                  key={anim.id}
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1, x: "50%", y: "50%" }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 1 }}
+                  className="absolute text-green-500"
+                >
+                  <Coins className="w-8 h-8 text-green-500" />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Caption */}
+      <CardContent className="p-4">
+        <p className="text-gray-300">
+          <span className="font-bold text-white mr-2">{username}</span>
+          {caption}
+        </p>
+      </CardContent>
+
+      {/* Action Buttons */}
+      <div className="flex justify-around items-center py-3 border-t border-gray-700">
+        <Button variant="ghost" size="sm" className="flex items-center space-x-1 text-gray-400 hover:text-white">
+          <Heart className="w-5 h-5 text-red-500" />
+          <span>{likes}</span>
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex items-center space-x-1 text-gray-400 hover:text-white"
+          onClick={handleSendCoin}
+        >
+          <Coins className="w-5 h-5 text-green-500" />
+          <span>{totalCoins}</span>
+        </Button>
+
+        {/* Reply Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex items-center space-x-1 text-gray-400 hover:text-white"
+          onClick={handleToggleReplyBox}
+        >
+          <CornerLeftDown className="w-5 h-5" />
+          <span>Reply</span>
+        </Button>
+
+        <Button variant="ghost" size="sm" className="flex items-center space-x-1 text-gray-400 hover:text-white">
+          <MessageCircle className="w-5 h-5" />
+          <span>{comments}</span>
+        </Button>
+
+        <Button variant="ghost" size="sm" className="flex items-center space-x-1 text-gray-400 hover:text-white">
+          <Share className="w-5 h-5" />
+          <span>Share</span>
+        </Button>
+      </div>
+
+      {/* Inline Reply Box */}
+      {showReplyBox && (
+        <div className="px-4 py-3 border-t border-gray-700 relative">
+          <textarea
+            className="w-full h-24 p-2 mb-2 bg-black text-white border border-gray-700 rounded"
+            placeholder="What's on your mind?"
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+          />
+          <div className="mb-2">
+            <label className="flex items-center space-x-2">
+              <Video className="w-5 h-5 text-gray-400" />
+              <span
+                className="text-gray-400 cursor-pointer hover:text-gray-200"
+                onClick={() => setShowSampleVideos(true)}
+              >
+                Select a sample video
+              </span>
+            </label>
+          </div>
+
+          {/* Show preview if a video is attached */}
+          {replyVideo && (
+            <div className="mb-2">
+              <video src={replyVideo} controls className="w-full h-auto border border-gray-700 rounded" />
+            </div>
+          )}
+          <div className="flex justify-end space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setShowReplyBox(false);
+                setReplyText("");
+                setReplyVideo(null);
+                setShowSampleVideos(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button variant="default" size="sm" onClick={handleSubmitReply}>
+              Reply
+            </Button>
+          </div>
+
+          {/* Sample videos modal */}
+          <AnimatePresence>
+            {showSampleVideos && (
+              <motion.div
+                className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 z-10"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <motion.div
+                  className="bg-gray-900 border border-gray-700 rounded-xl p-4 w-64 relative"
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0.8 }}
+                >
+                  <button
+                    onClick={() => setShowSampleVideos(false)}
+                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-200"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
+                  <h3 className="text-white font-bold mb-2">Select Sample Video</h3>
+                  <ul className="space-y-2">
+                    {SAMPLE_VIDEOS.map((vid) => (
+                      <li key={vid.url}>
+                        <Button
+                          variant="outline"
+                          className="w-full text-left"
+                          onClick={() => handleSelectSampleVideo(vid.url)}
+                        >
+                          {vid.title}
+                        </Button>
+                      </li>
+                    ))}
+                    <li>
+                      <Button
+                        variant="outline"
+                        className="w-full text-left"
+                        onClick={() => {
+                          handleSelectSampleVideo(null);
+                        }}
+                      >
+                        No Video
+                      </Button>
+                    </li>
+                  </ul>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
+      {/* Replies List */}
+      {replies.length > 0 && (
+        <div className="p-4 border-t border-gray-700">
+          <h3 className="text-lg font-bold mb-2">Replies</h3>
+          <div className="space-y-4">
+            {replies.map((r, i) => (
+              <div key={i} className="p-2 border border-gray-600 rounded text-gray-300">
+                {r.text && <p className="mb-2">{r.text}</p>}
+                {r.video && (
+                  <video src={r.video} controls className="w-full h-auto border border-gray-700 rounded" />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+};
+
+// HomePage is the main layout with sidebar, main content, and right section
+const HomePage = () => {
+  return (
+    <div className="bg-black text-white min-h-screen flex flex-col">
+      {/* Disclaimer */}
+      <div className="bg-red-600 p-2 text-center">This is just an idea, not a real product.</div>
+      <div className="flex flex-1">
+        {/* Sidebar */}
+        <aside className="w-1/4 p-4 border-r border-gray-700 space-y-4">
+          <Button variant="ghost" size="lg" className="flex items-center space-x-2">
+            <Home className="w-6 h-6" />
+            <span>Home</span>
+          </Button>
+          <Button variant="ghost" size="lg" className="flex items-center space-x-2">
+            <Hash className="w-6 h-6" />
+            <span>Explore</span>
+          </Button>
+          <Button variant="ghost" size="lg" className="flex items-center space-x-2">
+            <Bell className="w-6 h-6" />
+            <span>Notifications</span>
+          </Button>
+          <Button variant="ghost" size="lg" className="flex items-center space-x-2">
+            <Mail className="w-6 h-6" />
+            <span>Messages</span>
+          </Button>
+          <Button variant="ghost" size="lg" className="flex items-center space-x-2">
+            <Brain className="w-6 h-6" />
+            <span>Grok</span>
+          </Button>
+          <Button variant="ghost" size="lg" className="flex items-center space-x-2">
+            <Bookmark className="w-6 h-6" />
+            <span>Bookmarks</span>
+          </Button>
+          <Button variant="ghost" size="lg" className="flex items-center space-x-2">
+            <Users className="w-6 h-6" />
+            <span>Communities</span>
+          </Button>
+          <Button variant="ghost" size="lg" className="flex items-center space-x-2">
+            <User className="w-6 h-6" />
+            <span>Profile</span>
+          </Button>
+
+          {/* Username */}
+          <div className="pt-4 border-t border-gray-700">
+            <p className="text-gray-400">Logged in as:</p>
+            <p className="text-white font-semibold">@User123</p>
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="w-1/2 p-4">
+          <VideoPost
+            videoUrl="https://samplelib.com/lib/preview/mp4/sample-5s.mp4"
+            username="JohnDoe"
+            profilePic="https://via.placeholder.com/150"
+            caption="Check out this amazing video!"
+            likes={120}
+            comments={45}
+            coins={10}
+          />
+        </main>
+
+        {/* Right Section */}
+        <aside className="w-1/4 p-4 border-l border-gray-700">
+          <h2 className="text-lg font-bold mb-4">What's happening</h2>
+          <ul className="space-y-4">
+            <li className="border-b border-gray-700 pb-2">
+              <p className="text-sm text-gray-400">#BreakingNews</p>
+              <p className="font-semibold">New React update released!</p>
+            </li>
+            <li className="border-b border-gray-700 pb-2">
+              <p className="text-sm text-gray-400">#Tech</p>
+              <p className="font-semibold">JavaScript remains the most popular language.</p>
+            </li>
+          </ul>
+        </aside>
+      </div>
+    </div>
+  );
+};
+
+export default HomePage;
